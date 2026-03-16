@@ -43,7 +43,7 @@
 
 	<Target Condition="'$(Configuration)' == 'RE9'" Name="PostBuild" AfterTargets="PostBuildEvent">
 		<Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;D:\Games\steamapps\common\RESIDENT EVIL requiem BIOHAZARD requiem\reframework\plugins\managed\&quot; /s /i /y" />
-		<Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(MSBuildProjectDirectory)\..\..\Releases\RE9\reframework\plugins\managed\&quot; /s /i /y" />
+		<Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(MSBuildProjectDirectory)\..\..\Releases\RE9_DisablePostProcessingEffects\reframework\plugins\managed\&quot; /s /i /y" />
 	</Target>
 
 
