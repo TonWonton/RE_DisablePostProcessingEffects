@@ -4,6 +4,7 @@
 Disable or change the settings of different post-processing effects such as anti-aliasing, color correct, vignette, sharpening, various brightness options, volumetric fog, film grain, etc.
 
 ## Dependencies
+- REFramework C# API https://github.com/praydog/REFramework
 - REFrameworkNETPluginConfig https://github.com/TonWonton/REFrameworkNETPluginConfig
 
 ## Prerequisites
