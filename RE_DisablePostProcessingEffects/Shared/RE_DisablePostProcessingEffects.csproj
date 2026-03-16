@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+
+	<PropertyGroup>
+		<Configurations>RE9</Configurations>
+		<TargetFramework>net10.0</TargetFramework>
+		<OutputType>Library</OutputType>
+		<PlatformTarget>x64</PlatformTarget>
+		<Platforms>x64</Platforms>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+		<CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+		<DefineConstants>EMBEDDED_SOURCE</DefineConstants>
+		<PathMap>$(MSBuildProjectDirectory)=$(MSBuildProjectName)</PathMap>
+		<Deterministic>true</Deterministic>
+	</PropertyGroup>
+
+
+	<!-- Shared -->
+	<ItemGroup>
+		<Reference Include="Lib\**\*.dll">
+			<Private>false</Private>
+		</Reference>
+
+		<Compile Include="..\..\..\REFrameworkNETPluginConfig\REFrameworkNETPluginConfig\REFrameworkNETPluginConfig.cs" Link="REFrameworkNETPluginConfig.cs" />
+		<Compile Include="..\..\..\REFrameworkNETPluginConfig\Utility\ImGuiF.cs" Link="ImGuiF.cs" />
+	</ItemGroup>
+
+
+	<!-- RE9 -->
+	<PropertyGroup Condition="'$(Configuration)' == 'RE9'">
+		<AssemblyName>RE9_DisablePostProcessingEffects</AssemblyName>
+		<DefineConstants>RE9</DefineConstants>
+	</PropertyGroup>
+
+	<ItemGroup Condition="'$(Configuration)' == 'RE9'">
+		<Reference Include="..\RE9\Lib\**\*.dll">
+			<Private>false</Private>
+		</Reference>
+
+		<Compile Include="..\RE9\RE9_DisablePostProcessingEffects.cs" Link="RE9_DisablePostProcessingEffects.cs" />
+	</ItemGroup>
+
+	<Target Condition="'$(Configuration)' == 'RE9'" Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;D:\Games\steamapps\common\RESIDENT EVIL requiem BIOHAZARD requiem\reframework\plugins\managed\&quot; /s /i /y" />
+		<Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(MSBuildProjectDirectory)\..\..\Releases\RE9\reframework\plugins\managed\&quot; /s /i /y" />
+	</Target>
+
+
+</Project>
