@@ -65,11 +65,11 @@ namespace RE_DisablePostProcessingEffects
 			_ldrColorCorrect = _ldrPostProcess.ColorCorrect;
 			if (_ldrColorCorrect == null) return false;
 
-			_ldrFilmGrain = _ldrPostProcess.FilmGrain;
-			if (_ldrFilmGrain == null) return false;
-
 			_ldrLensDistortion = _ldrPostProcess.LensDistortion;
 			if (_ldrLensDistortion == null) return false;
+			
+			_ldrFilmGrain = _ldrPostProcess.FilmGrain;
+			if (_ldrFilmGrain == null) return false;
 
 			_volumetricFogControl = _renderingManager._VolumetricFogControl;
 			if (_volumetricFogControl == null) return false;

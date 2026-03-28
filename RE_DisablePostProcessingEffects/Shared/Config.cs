@@ -65,7 +65,6 @@ namespace RE_DisablePostProcessingEffects
 			if (API.IsDrawingUI() && ImGui.TreeNode(GUID_VERSION))
 			{
 				const float SLIDER_STEP_0p001 = 0.001f;
-				const float SLIDER_STEP_0p01 = 0.01f;
 
 				ToggleType toggleType;
 				int labelNr = 0;
@@ -92,7 +91,7 @@ namespace RE_DisablePostProcessingEffects
 				//Sharpening
 				ImGuiF.Category("Sharpening");
 				_sharpnessType.Combo().ResetButton(ref labelNr).GetValue(out SharpnessType sharpnessType);
-				_sharpness.BeginDisabled(sharpnessType == SharpnessType.Default).DragFloat(SLIDER_STEP_0p01, 0f, 100f).EndDisabled().ResetButton(ref labelNr);
+				_sharpness.BeginDisabled(sharpnessType == SharpnessType.Default).DragFloat(SLIDER_STEP_0p001, 0f, 10f).EndDisabled().ResetButton(ref labelNr);
 
 				//Exposure
 				ImGuiF.Category("Exposure");

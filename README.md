@@ -1,7 +1,7 @@
 # RE_DisablePostProcessingEffects
 
 ## Description
-Disable or change the settings of different post-processing effects such as anti-aliasing, color correct, vignette, sharpening, various brightness options, volumetric fog, film grain, etc.
+Disable or change the settings of different post-processing effects such as anti-aliasing, color correct, vignette, sharpening, various brightness options, volumetric fog, film grain, etc. for RE Engine games
 
 ## Currently supported games
 - Resident Evil Requiem (RE9)

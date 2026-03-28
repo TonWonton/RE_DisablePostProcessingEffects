@@ -1,4 +1,8 @@
 ## RE9
+### v1.1.0-1
+- Add lua version
+
+
 ### v1.1.0
 - Fix some settings not applying automatically
 

@@ -92,7 +92,7 @@ namespace RE_DisablePostProcessingEffects
 				case SharpnessType.NVIDIAImageScaling: return RenderConfig.SharpnessType.NVIDIAImageScaling;
 				case SharpnessType.FidelityFXFSR1: return RenderConfig.SharpnessType.FidelityFXFSR1;
 				case SharpnessType.TrinityPSSR: return RenderConfig.SharpnessType.TrinityPSSR;
-				default: return RenderConfig.SharpnessType.Default;
+				default: return RenderConfig.SharpnessType.Custom;
 			}
 		}
 	}
