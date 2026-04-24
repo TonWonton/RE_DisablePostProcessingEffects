@@ -8,17 +8,20 @@ namespace RE_DisablePostProcessingEffects
 {
 	internal static class Extensions
 	{
-		public static T? TryGetComponent<T>(this GameObject gameObject, string typeName) where T : class
+		public static T? TryGetComponent<T>(this GameObject gameObject, string? typeName) where T : class
 		{
-			_System.Type? type = _System.Type.GetType(typeName);
-			if (type != null)
+			if (string.IsNullOrEmpty(typeName) == false)
 			{
-				Component? componentFromGameObject = gameObject.getComponent(type);
-				if (componentFromGameObject != null)
+				_System.Type? type = _System.Type.GetType(typeName);
+				if (type != null)
 				{
-					if (componentFromGameObject is IObject componentIObject)
+					Component? componentFromGameObject = gameObject.getComponent(type);
+					if (componentFromGameObject != null)
 					{
-						return componentIObject.As<T>();
+						if (componentFromGameObject is IObject componentIObject)
+						{
+							return componentIObject.TryAs<T>();
+						}
 					}
 				}
 			}
@@ -31,7 +34,7 @@ namespace RE_DisablePostProcessingEffects
 			return toggleType == ToggleType.Default || toggleType == ToggleType.Disable;
 		}
 
-		public static RenderConfig.AntiAliasingType AntiAliasingTypeToRenderConfigAntiAliasingType(this AntiAliasingType antiAliasingType)
+		public static RenderConfig.AntiAliasingType ToRenderConfigAntiAliasingType(this AntiAliasingType antiAliasingType)
 		{
 			switch (antiAliasingType)
 			{
@@ -44,7 +47,7 @@ namespace RE_DisablePostProcessingEffects
 			}
 		}
 
-		public static ToneMapping.TemporalAA TemporalAAToToneMappingTemporalAA(this TemporalAA temporalAA)
+		public static ToneMapping.TemporalAA ToToneMappingTemporalAA(this TemporalAA temporalAA)
 		{
 			switch (temporalAA)
 			{
@@ -54,11 +57,24 @@ namespace RE_DisablePostProcessingEffects
 				case TemporalAA.Weak: return ToneMapping.TemporalAA.Weak;
 				case TemporalAA.Mild: return ToneMapping.TemporalAA.Mild;
 				case TemporalAA.Strong: return ToneMapping.TemporalAA.Strong;
-				default: return ToneMapping.TemporalAA.Mild;
+				default: return ToneMapping.TemporalAA.Manual;
 			}
 		}
 
-		public static ToneMapping.AutoExposure AutoExposureToToneMappingAutoExposure(this AutoExposure autoExposure)
+		public static ToneMapping.TemporalAAAlgorithm ToToneMappingTemporalAAAlgorithm(this TemporalAAAlgorithm temporalAAAlgorithm)
+		{
+			switch (temporalAAAlgorithm)
+			{
+				case TemporalAAAlgorithm.Legacy: return ToneMapping.TemporalAAAlgorithm.Legacy;
+				case TemporalAAAlgorithm.Standard: return ToneMapping.TemporalAAAlgorithm.Standard;
+				case TemporalAAAlgorithm.StandardV2: return ToneMapping.TemporalAAAlgorithm.StandardV2;
+				case TemporalAAAlgorithm.StandardV3: return ToneMapping.TemporalAAAlgorithm.StandardV3;
+				case TemporalAAAlgorithm.Sharp: return ToneMapping.TemporalAAAlgorithm.Sharp;
+				default: return ToneMapping.TemporalAAAlgorithm.StandardV2;
+			}
+		}
+
+		public static ToneMapping.AutoExposure ToToneMappingAutoExposure(this AutoExposure autoExposure)
 		{
 			switch (autoExposure)
 			{
@@ -69,7 +85,7 @@ namespace RE_DisablePostProcessingEffects
 			}
 		}
 
-		public static ToneMapping.Vignetting VignetteToToneMappingVignetting(this Vignette vignette)
+		public static ToneMapping.Vignetting ToToneMappingVignetting(this Vignette vignette)
 		{
 			switch (vignette)
 			{
@@ -78,11 +94,16 @@ namespace RE_DisablePostProcessingEffects
 				case Vignette.KerarePlus: return ToneMapping.Vignetting.KerarePlus;
 				case Vignette.Anamorphic: return ToneMapping.Vignetting.Anamorphic;
 				case Vignette.AnamorphicKerarePlus: return ToneMapping.Vignetting.AnamorphicKerarePlus;
+#if RE9
 				default: return ToneMapping.Vignetting.Enable;
+#endif
+#if PRAGMATA
+				default: return ToneMapping.Vignetting.Disable;
+#endif
 			}
 		}
 
-		public static RenderConfig.SharpnessType SharpnessTypeToRenderConfigSharpnessType(this SharpnessType sharpnessType)
+		public static RenderConfig.SharpnessType ToRenderConfigSharpnessType(this SharpnessType sharpnessType)
 		{
 			switch (sharpnessType)
 			{

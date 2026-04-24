@@ -31,6 +31,16 @@ namespace RE_DisablePostProcessingEffects
 		Strong
 	}
 
+	public enum TemporalAAAlgorithm
+	{
+		Default = 1,
+		Legacy,
+		Standard,
+		StandardV2,
+		StandardV3,
+		Sharp
+	}
+
 	public enum AutoExposure
 	{
 		Disable = 0,

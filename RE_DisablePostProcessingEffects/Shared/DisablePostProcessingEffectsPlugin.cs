@@ -1,4 +1,5 @@
 #nullable enable
+using System.Diagnostics.CodeAnalysis;
 using Hexa.NET.ImGui;
 using REFrameworkNET.Callbacks;
 using REFrameworkNET.Attributes;
@@ -19,13 +20,13 @@ namespace RE_DisablePostProcessingEffects
 
 
 		/* VARIABLES */
-		//Singletons
-		private static NativeObject? _displaySettings;
-		private static uint _setGammaIndex, _setOutputLowerLimitIndex, _setOutputUpperLimitIndex;
+		//Native
 		private static NativeObject? _renderer;
 		private static uint _getRenderConfigIndex;
+		private static NativeObject? _displaySettings;
+		private static uint _setGammaIndex, _setOutputLowerLimitIndex, _setOutputUpperLimitIndex;
 
-		//References
+		//Managed
 		private static ToneMapping? _toneMapping;
 		private static LDRPostProcess? _ldrPostProcess;
 		private static LDRColorCorrect? _ldrColorCorrect;
@@ -35,11 +36,23 @@ namespace RE_DisablePostProcessingEffects
 
 
 		//Variables
-		private static readonly object[] _floatObject = new object[1];
-		private static readonly object[] _boolObject = new object[1];
 		private static readonly object _resultObject = new object();
+		private static readonly object[] _boolObject = new object[1];
+		private static readonly object[] _floatObject = new object[1];
 
+		//Properties
 		private static bool _initialized = false;
+
+		[MemberNotNullWhen(true,
+		nameof(_renderer),
+		nameof(_displaySettings),
+		nameof(_toneMapping),
+		nameof(_ldrPostProcess),
+		nameof(_ldrColorCorrect),
+		nameof(_ldrLensDistortion),
+		nameof(_ldrFilmGrain),
+		nameof(_volumetricFogControl))]
+		public static bool Initialized { get { return _initialized; } }
 
 
 
@@ -47,28 +60,29 @@ namespace RE_DisablePostProcessingEffects
 		private static partial void ApplyGameSpecificNonPersistentSettings();
 		private static void ApplyNonPersistentSettings()
 		{
-			ToggleType toggleType;
-
-			//Color correction
-			LDRColorCorrect? lDRColorCorrect = _ldrColorCorrect;
-			if (lDRColorCorrect != null)
+			if (Initialized)
 			{
+				ToggleType toggleType;
+
+				//Color correction
 				toggleType = _colorCorrect.Value;
 				if (toggleType != ToggleType.Default)
 				{
-					lDRColorCorrect.Enabled = toggleType == ToggleType.Enable;
+					_ldrColorCorrect.Enabled = toggleType == ToggleType.Enable;
 				}
-			}
 
-			//ToneMapping
-			ToneMapping? toneMapping = _toneMapping;
-			if (toneMapping != null)
-			{
+				ToneMapping toneMapping = _toneMapping;
 				//TAA
 				TemporalAA taa = _taa.Value;
 				if (taa != TemporalAA.Default)
 				{
-					toneMapping.setTemporalAA(taa.TemporalAAToToneMappingTemporalAA());
+					toneMapping.setTemporalAA(taa.ToToneMappingTemporalAA());
+				}
+
+				TemporalAAAlgorithm taaAlgorithm = _taaAlgorithm.Value;
+				if (taaAlgorithm != TemporalAAAlgorithm.Default)
+				{
+					toneMapping.setTemporalAAAlgorithm(taaAlgorithm.ToToneMappingTemporalAAAlgorithm());
 				}
 
 				toggleType = _taaJitter.Value;
@@ -81,31 +95,35 @@ namespace RE_DisablePostProcessingEffects
 				toggleType = _exposure.Value;
 				if (toggleType != ToggleType.Default)
 				{
+#if !PRAGMATA
 					toneMapping.ExposureEnable = toggleType == ToggleType.Enable;
+#endif
 					toneMapping.EV = _ev.Value;
 				}
 
 				AutoExposure autoExposure = _autoExposure.Value;
 				if (autoExposure != AutoExposure.Default)
 				{
-					toneMapping.setAutoExposure(autoExposure.AutoExposureToToneMappingAutoExposure());
+					toneMapping.setAutoExposure(autoExposure.ToToneMappingAutoExposure());
 					toneMapping.AutoExposureMinEV = _autoExposureMinEV.Value;
 					toneMapping.AutoExposureMaxEV = _autoExposureMaxEV.Value;
 					toneMapping.ReferenceLuminance = _referenceLuminance.Value;
 				}
 
+#if !PRAGMATA
 				toggleType = _localExposure.Value;
 				if (toggleType != ToggleType.Default)
 				{
 					toneMapping.EnableLocalExposure = toggleType == ToggleType.Enable;
 					toneMapping.setLocalExposureType(_localExposureType.Value);
 				}
+#endif
 
 				//Vignette
 				Vignette vignette = _vignette.Value;
 				if (vignette != Vignette.Default)
 				{
-					toneMapping.setVignetting(vignette.VignetteToToneMappingVignetting());
+					toneMapping.setVignetting(vignette.ToToneMappingVignetting());
 					toneMapping.VignettingBrightness = _vignetteBrightness.Value;
 				}
 
@@ -115,77 +133,91 @@ namespace RE_DisablePostProcessingEffects
 				{
 					toneMapping.Sharpness = _sharpness.Value;
 				}
-			}
 
-			//Volumetric fog
-			VolumetricFogControl? volumetricFogControl = _volumetricFogControl;
-			if (volumetricFogControl != null)
-			{
+				//Volumetric fog
+				VolumetricFogControl volumetricFogControl = _volumetricFogControl;
 				toggleType = _volumetricFog.Value;
 				if (toggleType != ToggleType.Default)
 				{
 					volumetricFogControl.Enabled = toggleType == ToggleType.Enable;
 				}
-			}
 
-			ApplyGameSpecificNonPersistentSettings();
+#if !PRAGMATA
+				ApplyGameSpecificNonPersistentSettings();
+#endif
+			}
 		}
 
 		private static partial void ApplyGameSpecificPersistentSettings();
 		private static void ApplyPersistentSettings()
 		{
-			if (_initialized)
+			if (Initialized)
 			{
-				NativeObject? renderer = _renderer;
-				if (renderer != null)
+#if PRAGMATA
+				ToggleType toggleType;
+				ToneMapping toneMapping = _toneMapping;
+
+				toggleType = _exposure.Value;
+				if (toggleType != ToggleType.Default)
 				{
-					object result = _resultObject;
+					toneMapping.ExposureEnable = toggleType == ToggleType.Enable;
+				}
 
-					renderer.HandleInvokeMember_Internal(_getRenderConfigIndex, null, ref result);
-					var renderConfig = ((ManagedObject)result).TryAs<RenderConfig>();
-					if (renderConfig != null)
+				toggleType = _localExposure.Value;
+				if (toggleType != ToggleType.Default)
+				{
+					toneMapping.EnableLocalExposure = toggleType == ToggleType.Enable;
+					toneMapping.setLocalExposureType(_localExposureType.Value);
+				}
+#endif
+
+				object result = _resultObject;
+				object[] boolObject = _boolObject;
+				object[] floatObject = _floatObject;
+
+				NativeObject renderer = _renderer;
+				renderer.HandleInvokeMember_Internal(_getRenderConfigIndex, null, ref result);
+				var renderConfig = ((ManagedObject)result).TryAs<RenderConfig>();
+				if (renderConfig != null)
+				{
+					//Anti-aliasing
+					AntiAliasingType antiAliasingType = _antiAliasingType.Value;
+					if (antiAliasingType != AntiAliasingType.DEFAULT)
 					{
-						//Anti-aliasing
-						AntiAliasingType antiAliasingType = _antiAliasingType.Value;
-						if (antiAliasingType != AntiAliasingType.DEFAULT)
-						{
-							renderConfig.AnitiAliasingSetting = antiAliasingType.AntiAliasingTypeToRenderConfigAntiAliasingType();
-						}
+						renderConfig.AnitiAliasingSetting = antiAliasingType.ToRenderConfigAntiAliasingType();
+					}
 
-						//Sharpening
-						SharpnessType sharpnessType = _sharpnessType.Value;
-						if (sharpnessType != SharpnessType.Default)
-						{
-							renderConfig.SharpnessSetting = sharpnessType.SharpnessTypeToRenderConfigSharpnessType();
-						}
+					//Sharpening
+					SharpnessType sharpnessType = _sharpnessType.Value;
+					if (sharpnessType != SharpnessType.Default)
+					{
+						renderConfig.SharpnessSetting = sharpnessType.ToRenderConfigSharpnessType();
 					}
 				}
 
-				NativeObject? displaySettings = _displaySettings;
-				if (displaySettings != null)
+				NativeObject displaySettings = _displaySettings;
+				//Gamma
+				if (_customGamma.Value)
 				{
-					object result = _resultObject;
-					object[] floatObject = _floatObject;
-
-					//Gamma
-					if (_customGamma.Value)
-					{
-						floatObject[0] = _gamma.Value;
-						displaySettings.HandleInvokeMember_Internal(_setGammaIndex, floatObject, ref result);
-					}
-
-					//Brightness
-					if (_customBrightness.Value)
-					{
-						floatObject[0] = _minBrightness.Value;
-						displaySettings.HandleInvokeMember_Internal(_setOutputLowerLimitIndex, floatObject, ref result);
-
-						floatObject[0] = _maxBrightness.Value;
-						displaySettings.HandleInvokeMember_Internal(_setOutputUpperLimitIndex, floatObject, ref result);
-					}
+					floatObject[0] = _gamma.Value;
+					displaySettings.HandleInvokeMember_Internal(_setGammaIndex, floatObject, ref result);
 				}
 
-				ApplyGameSpecificPersistentSettings();
+				//Brightness
+				if (_customBrightness.Value)
+				{
+					floatObject[0] = _minBrightness.Value;
+					displaySettings.HandleInvokeMember_Internal(_setOutputLowerLimitIndex, floatObject, ref result);
+
+					floatObject[0] = _maxBrightness.Value;
+					displaySettings.HandleInvokeMember_Internal(_setOutputUpperLimitIndex, floatObject, ref result);
+				}
+
+#if RE9 || PRAGMATA
+
+#else
+				ApplyGameSpecificNonPersistentSettings();
+#endif
 			}
 		}
 
@@ -199,6 +231,40 @@ namespace RE_DisablePostProcessingEffects
 			}
 
 			ApplyNonPersistentSettings();
+		}
+
+		private static partial bool TryInitializeGameSpecificVariables();
+		private static void Initialize()
+		{
+			//Renderer
+			if (_renderer == null) _renderer = API.GetNativeSingleton(typeof(Renderer).FullName);
+			if (_renderer == null) return;
+
+			var rendererTypeDef = _renderer.GetTypeDefinition();
+			if (rendererTypeDef == null) return;
+			_getRenderConfigIndex = rendererTypeDef.FindMethod("get_RenderConfig").GetIndex();
+
+			//DisplaySettings
+			if (_displaySettings == null) _displaySettings = API.GetNativeSingleton(typeof(DisplaySettings).FullName);
+			if (_displaySettings == null) return;
+
+			var displaySettingsTypeDef = _displaySettings.GetTypeDefinition();
+			if (displaySettingsTypeDef == null) return;
+			_setGammaIndex = displaySettingsTypeDef.FindMethod("set_Gamma").GetIndex();
+			_setOutputLowerLimitIndex = displaySettingsTypeDef.FindMethod("set_OutputLowerLimit").GetIndex();
+			_setOutputUpperLimitIndex = displaySettingsTypeDef.FindMethod("set_OutputUpperLimit").GetIndex();
+
+			//Initialize game specific variables
+			if (TryInitializeGameSpecificVariables())
+			{
+#if DEBUG
+				Utility.TryDebugPrintValues();
+#endif
+				_initialized = true;
+				ApplyPersistentSettings();
+				Log.Info("Initialization successful");
+				//Log.Info("Default TAAAlgorithm: " + _toneMapping!.getTemporalAAAlgorithm());
+			}
 		}
 
 
@@ -242,6 +308,13 @@ namespace RE_DisablePostProcessingEffects
 			_customBrightness.ValueChanged += ApplyPersistentSettings;
 			_minBrightness.ValueChanged += ApplyPersistentSettings;
 			_maxBrightness.ValueChanged += ApplyPersistentSettings;
+
+#if PRAGMATA
+			_exposure.ValueChanged += ApplyPersistentSettings;
+			_ev.ValueChanged += ApplyPersistentSettings;
+			_localExposure.ValueChanged += ApplyPersistentSettings;
+			_localExposureType.ValueChanged += ApplyPersistentSettings;
+#endif
 		}
 
 		private static void UnregisterConfigEvents()
@@ -259,36 +332,13 @@ namespace RE_DisablePostProcessingEffects
 			_customBrightness.ValueChanged -= ApplyPersistentSettings;
 			_minBrightness.ValueChanged -= ApplyPersistentSettings;
 			_maxBrightness.ValueChanged -= ApplyPersistentSettings;
-		}
 
-		private static partial bool TryInitializeGameSpecificVariables();
-		private static void Initialize()
-		{
-			//Renderer
-			if (_renderer == null) _renderer = API.GetNativeSingleton("via.render.Renderer");
-			if (_renderer == null) return;
-
-			var rendererTypeDef = _renderer.GetTypeDefinition();
-			if (rendererTypeDef == null) return;
-			_getRenderConfigIndex = rendererTypeDef.FindMethod("get_RenderConfig").GetIndex();
-
-			//DisplaySettings
-			if (_displaySettings == null) _displaySettings = API.GetNativeSingleton("via.render.DisplaySettings");
-			if (_displaySettings == null) return;
-
-			var displaySettingsTypeDef = _displaySettings.GetTypeDefinition();
-			if (displaySettingsTypeDef == null) return;
-			_setGammaIndex = displaySettingsTypeDef.FindMethod("set_Gamma").GetIndex();
-			_setOutputLowerLimitIndex = displaySettingsTypeDef.FindMethod("set_OutputLowerLimit").GetIndex();
-			_setOutputUpperLimitIndex = displaySettingsTypeDef.FindMethod("set_OutputUpperLimit").GetIndex();
-
-			//Initialize game specific variables
-			if (TryInitializeGameSpecificVariables())
-			{
-				_initialized = true;
-				ApplyPersistentSettings();
-				Log.Info("Initialization successful");
-			}
+#if PRAGMATA
+			_exposure.ValueChanged -= ApplyPersistentSettings;
+			_ev.ValueChanged -= ApplyPersistentSettings;
+			_localExposure.ValueChanged -= ApplyPersistentSettings;
+			_localExposureType.ValueChanged -= ApplyPersistentSettings;
+#endif
 		}
 	}
 

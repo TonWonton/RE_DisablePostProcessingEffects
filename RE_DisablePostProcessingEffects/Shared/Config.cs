@@ -18,6 +18,7 @@ namespace RE_DisablePostProcessingEffects
 		//Anti-aliasing
 		private static ConfigEntry<AntiAliasingType> _antiAliasingType = _config.Add("Anti-aliasing type", AntiAliasingType.DEFAULT);
 		private static ConfigEntry<TemporalAA> _taa = _config.Add("TAA", TemporalAA.Default);
+		private static ConfigEntry<TemporalAAAlgorithm> _taaAlgorithm = _config.Add("TAA algorithm", TemporalAAAlgorithm.Default);
 		private static ConfigEntry<ToggleType> _taaJitter = _config.Add("TAA jitter", ToggleType.Default);
 
 		//Color
@@ -29,11 +30,25 @@ namespace RE_DisablePostProcessingEffects
 
 		//Sharpening
 		private static ConfigEntry<SharpnessType> _sharpnessType = _config.Add("Sharpness type", SharpnessType.Default);
-		private static ConfigEntry<float> _sharpness = _config.Add("Sharpness", 0.333f);
+		private static ConfigEntry<float> _sharpness = _config.Add("Sharpness",
+#if RE9
+		0.333f
+#endif
+#if PRAGMATA
+		0.35f
+#endif
+		);
 
 		//Exposure
 		private static ConfigEntry<ToggleType> _exposure = _config.Add("Exposure", ToggleType.Default);
-		private static ConfigEntry<float> _ev = _config.Add("Exposure value (EV)", 2f);
+		private static ConfigEntry<float> _ev = _config.Add("Exposure value (EV)",
+#if RE9
+			2f
+#endif
+#if PRAGMATA
+			1f
+#endif
+		);
 
 		//Local exposure
 		private static ConfigEntry<ToggleType> _localExposure = _config.Add("Local exposure", ToggleType.Default);
@@ -41,7 +56,14 @@ namespace RE_DisablePostProcessingEffects
 
 		//Auto exposure
 		private static ConfigEntry<AutoExposure> _autoExposure = _config.Add("Auto exposure", AutoExposure.Default);
-		private static ConfigEntry<float> _autoExposureMinEV = _config.Add("Auto exposure min EV", 1f);
+		private static ConfigEntry<float> _autoExposureMinEV = _config.Add("Auto exposure min EV",
+#if RE9
+		1f
+#endif
+#if PRAGMATA
+		3f
+#endif
+		);
 		private static ConfigEntry<float> _autoExposureMaxEV = _config.Add("Auto exposure max EV", 5f);
 		private static ConfigEntry<ReferenceLuminance> _referenceLuminance = _config.Add("Reference luminance type", ReferenceLuminance.Average);
 
@@ -69,6 +91,15 @@ namespace RE_DisablePostProcessingEffects
 				ToggleType toggleType;
 				int labelNr = 0;
 
+				//Debug
+#if DEBUG
+				ImGuiF.Category("Debug");
+				if (ImGui.Button("Debug print values"))
+				{
+					Utility.TryDebugPrintValues();
+				}
+#endif
+
 				//Anti-aliasing
 				ImGuiF.Category("Anti-aliasing");
 				ImGui.Text("Note: Changing anti-aliasing type to DEFAULT requires changing the in-game anti-aliasing option or game restart to revert the changes.");
@@ -76,6 +107,7 @@ namespace RE_DisablePostProcessingEffects
 
 				ImGuiF.SubCategory("TAA");
 				_taa.Combo().ResetButton(ref labelNr);
+				_taaAlgorithm.Combo().ResetButton(ref labelNr);
 				_taaJitter.Combo().ResetButton(ref labelNr);
 				ImGuiF.EndSubCategory();
 
@@ -95,10 +127,16 @@ namespace RE_DisablePostProcessingEffects
 
 				//Exposure
 				ImGuiF.Category("Exposure");
+#if PRAGMATA
+				ImGui.Text("Note: Changing exposure to Default requires a game restart to revert the changes.");
+#endif
 				_exposure.Combo().ResetButton(ref labelNr).GetValue(out toggleType);
 				_ev.BeginDisabled(toggleType.IsDefaultOrDisabled()).DragFloat(SLIDER_STEP_0p001, -10f, 10f).EndDisabled().ResetButton(ref labelNr);
 
 				ImGuiF.SubCategory("Local exposure");
+#if PRAGMATA
+				ImGui.Text("Note: Changing local exposure to Default requires a game restart to revert the changes.");
+#endif
 				_localExposure.Combo().ResetButton(ref labelNr).GetValue(out toggleType);
 				_localExposureType.BeginDisabled(toggleType.IsDefaultOrDisabled()).Combo().EndDisabled().ResetButton(ref labelNr);
 				ImGuiF.EndSubCategory();
@@ -128,6 +166,9 @@ namespace RE_DisablePostProcessingEffects
 
 				//Graphics settings
 				ImGuiF.Category("GRAPHICS SETTINGS");
+#if PRAGMATA
+				ImGui.Text("Note: Changing volumetric fog to Default requires a game restart to revert the changes.");
+#endif
 				ImGui.Text("Note: Changing film grain requires a game restart to apply the changes.");
 				_volumetricFog.Combo().ResetButton(ref labelNr);
 				_filmGrain.Combo().ResetButton(ref labelNr);
