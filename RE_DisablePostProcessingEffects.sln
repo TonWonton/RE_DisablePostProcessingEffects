@@ -6,11 +6,20 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RE_DisablePostProcessingEff
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		RE9|x64 = RE9|x64
+		Debug|RE9 = Debug|RE9
+		Debug|PRAGMATA = Debug|PRAGMATA
+		Release|RE9 = Release|RE9
+		Release|PRAGMATA = Release|PRAGMATA
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{28B75EE7-E8F6-D910-5BF9-EC53C2D0D152}.RE9|x64.ActiveCfg = RE9|x64
-		{28B75EE7-E8F6-D910-5BF9-EC53C2D0D152}.RE9|x64.Build.0 = RE9|x64
+		{28B75EE7-E8F6-D910-5BF9-EC53C2D0D152}.Debug|RE9.ActiveCfg = Debug|RE9
+		{28B75EE7-E8F6-D910-5BF9-EC53C2D0D152}.Debug|RE9.Build.0 = Debug|RE9
+		{28B75EE7-E8F6-D910-5BF9-EC53C2D0D152}.Debug|PRAGMATA.ActiveCfg = Debug|PRAGMATA
+		{28B75EE7-E8F6-D910-5BF9-EC53C2D0D152}.Debug|PRAGMATA.Build.0 = Debug|PRAGMATA
+		{28B75EE7-E8F6-D910-5BF9-EC53C2D0D152}.Release|RE9.ActiveCfg = Release|RE9
+		{28B75EE7-E8F6-D910-5BF9-EC53C2D0D152}.Release|RE9.Build.0 = Release|RE9
+		{28B75EE7-E8F6-D910-5BF9-EC53C2D0D152}.Release|PRAGMATA.ActiveCfg = Release|PRAGMATA
+		{28B75EE7-E8F6-D910-5BF9-EC53C2D0D152}.Release|PRAGMATA.Build.0 = Release|PRAGMATA
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
