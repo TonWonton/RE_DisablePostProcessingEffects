@@ -1,7 +1,9 @@
 #nullable enable
 using REFrameworkNET;
-using app;
 using REFrameworkNET.Attributes;
+using app;
+using via.render;
+using System;
 
 
 namespace RE_DisablePostProcessingEffects
@@ -42,8 +44,15 @@ namespace RE_DisablePostProcessingEffects
 
 
 		/* HOOKS */
+		//[MethodHook(typeof(DLSSUpscalingInterface), "get_DLSSEnableSharpness", MethodHookType.Post)]
+		//public static void PostGetDLSSEnableSharpness(ref ulong retVal)
+		//{
+		//	Log.Info("get_DLSSEnableSharpness hook called");
+		//	retVal = 0;
+		//}
+
 		[MethodHook(typeof(EnvStageManager), nameof(EnvStageManager.OnChangeCurrentStage), MethodHookType.Post)]
-		public static void PostEnvStageManagerOnChangeCurrentStage(ref ulong retVal)
+		public static void PostOnChangeCurrentStage(ref ulong retVal)
 		{
 			ApplyPersistentSettings();
 		}
