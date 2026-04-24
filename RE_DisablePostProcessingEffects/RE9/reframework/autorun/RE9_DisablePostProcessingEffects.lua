@@ -25,6 +25,10 @@ local function LogInfo(message)
 	log.info(s_logPrefix .. message)
 end
 
+local function LogDebug(message)
+	log.debug(s_logPrefix .. message)
+end
+
 
 
 --CONST
@@ -232,6 +236,8 @@ local tbl_config =
 	f_vignetteBrightness = 0.0,
 	i_sharpnessType = 1,
 	f_sharpness = 0.333,
+	i_dlssSharpening = 1,
+	f_dlssSharpness = 0.0,
 	i_exposure = 1,
 	f_ev = 2.0,
 	i_localExposure = 1,
@@ -271,8 +277,12 @@ local no_renderer = nil
 local td_renderer = nil
 local no_displaySettings = nil
 local td_displaySettings = nil
+local no_upscalingInterface = nil
+local td_upscalingInterface = nil
 
 --Managed
+local c_dlssInterface = nil
+local c_ndsrInterface = nil
 local c_renderingManager = nil
 local c_toneMapping = nil
 local c_ldrPostProcess = nil
@@ -383,6 +393,7 @@ end
 
 local function ApplyPersistentSettings()
 	if b_initialized then
+		local teToggleType = te_ToggleType
 		local tblConfig = tbl_config
 	
 		local noRenderer = no_renderer
@@ -422,6 +433,29 @@ local function ApplyPersistentSettings()
 				sdk.call_native_func(noDisplaySettings, tdDisplaySettings, "set_OutputUpperLimit", tblConfig.f_maxBrightness)
 			end
 		end
+
+		local cDLSSInterface = c_dlssInterface
+		if cDLSSInterface ~= nil then
+			local iDLSSSharpening = tblConfig.i_dlssSharpening
+			if iDLSSSharpening ~= te_ToggleType.Default then
+				local bIsDLSSSharpening = iDLSSSharpening == teToggleType.Enable
+				cDLSSInterface:call("set_DLSSEnableSharpness", bIsDLSSSharpening)
+				cDLSSInterface:call("set_DLSSSharpness", tblConfig.f_dlssSharpness)
+				cDLSSInterface:call("set_EnablePostSharpness", bIsDLSSSharpening)
+				cDLSSInterface:call("set_PostSharpness", tblConfig.f_dlssSharpness)
+
+				--LogDebug("DLSS sharpening set to: " .. tostring(cDLSSInterface:call("get_DLSSEnableSharpness")))
+				--LogDebug("DLSS sharpness set to: " .. tostring(cDLSSInterface:call("get_DLSSSharpness")))
+				--LogDebug("DLSS post sharpening set to: " .. tostring(cDLSSInterface:call("get_EnablePostSharpness")))
+				--LogDebug("DLSS post sharpness value set to: " .. tostring(cDLSSInterface:call("get_PostSharpness"))) 
+
+				local cNDSRUpscalingInterface = c_ndsrInterface
+				if cNDSRUpscalingInterface ~= nil then
+					cNDSRUpscalingInterface:call("set_DisableTAASharpnessFilter", bIsDLSSSharpening == false)
+					LogDebug("set_DisableTAASharpnessFilter set to: " .. tostring(cNDSRUpscalingInterface:call("get_DisableTAASharpnessFilter")))
+				end
+			end
+		end
 	end
 end
 
@@ -444,6 +478,21 @@ local function Initialize()
 
 	if td_displaySettings == nil then td_displaySettings = sdk.find_type_definition("via.render.DisplaySettings") end
 	if td_displaySettings == nil then return end
+
+	if no_upscalingInterface == nil then no_upscalingInterface = sdk.get_native_singleton("via.render.UpscalingInterface") end
+	if no_upscalingInterface == nil then return end
+
+	if td_upscalingInterface == nil then td_upscalingInterface = sdk.find_type_definition("via.render.UpscalingInterface") end
+	if td_upscalingInterface == nil then return end
+
+	if c_dlssInterface == nil then c_dlssInterface = sdk.call_native_func(no_upscalingInterface, td_upscalingInterface, "get_DLSSInterface") end
+	if c_dlssInterface == nil then return end
+
+	if c_ndsrInterface == nil then c_ndsrInterface = sdk.call_native_func(no_upscalingInterface, td_upscalingInterface, "get_NDSRInterface") end
+	if c_ndsrInterface == nil then return end
+
+	if td_systemPropertyDescriptor == nil then td_systemPropertyDescriptor = sdk.find_type_definition("app.SystemPropertyDescriptor.InternalValues") end
+	if td_systemPropertyDescriptor == nil then return end
 
 	if c_renderingManager == nil then c_renderingManager = sdk.get_managed_singleton("app.RenderingManager") end
 	if c_renderingManager == nil then return end
@@ -475,9 +524,11 @@ local function Initialize()
 	if mOnChangeCurrentStage == nil then return end
 
 	sdk.hook(mOnChangeCurrentStage, PreOnChangeCurrentStage, PostOnChangeCurrentStage)
+
 	b_initialized = true
 	ApplyPersistentSettings()
 	LogInfo("Initialized")
+	LogDebug("Initialized")
 end
 
 
@@ -560,6 +611,10 @@ re.on_draw_ui(function()
 		imgui.begin_disabled(isSharpeningDefault)
 		bChanged, tblConfig.f_sharpness = imgui.drag_float("Sharpness", tblConfig.f_sharpness, 0.001, 0.0, 10.0)
 		imgui.end_disabled()
+		bChanged, tblConfig.i_dlssSharpening = combo("DLSS sharpening", tblConfig.i_dlssSharpening, tblToggleTypeNames)
+		bAnyChanged = bAnyChanged or bChanged
+		bChanged, tblConfig.f_dlssSharpness = imgui.drag_float("DLSS sharpness", tblConfig.f_dlssSharpness, 0.1, 0.0, 10.0)
+		bAnyChanged = bAnyChanged or bChanged
 
 		--Exposure
 		imgui.new_line()
