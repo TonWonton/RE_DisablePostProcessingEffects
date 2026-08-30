@@ -1,0 +1,20 @@
+<Solution>
+
+	<Configurations>
+		<Platform Name="RE9" />
+		<Platform Name="PRAGMATA" />
+		<Platform Name="MHWILDS" />
+	</Configurations>
+
+
+
+	<Project Path=".\RE_DisablePostProcessingEffects\RE_DisablePostProcessingEffects.csproj">
+		<Configuration Solution="Debug|RE9" Project="Debug|RE9" />
+		<Configuration Solution="Debug|PRAGMATA" Project="Debug|PRAGMATA" />
+		<Configuration Solution="Debug|MHWILDS" Project="Debug|MHWILDS" />
+		<Configuration Solution="Release|RE9" Project="Release|RE9" />
+		<Configuration Solution="Release|PRAGMATA" Project="Release|PRAGMATA" />
+		<Configuration Solution="Release|MHWILDS" Project="Release|MHWILDS" />
+	</Project>
+
+</Solution>

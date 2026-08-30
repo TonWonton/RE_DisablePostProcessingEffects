@@ -1,0 +1,136 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!-- Config -->
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<PlatformTarget>x64</PlatformTarget>
+		<OutputType>Library</OutputType>
+
+		<Configurations>Debug;Release</Configurations>
+		<Platforms>RE9;PRAGMATA;MHWILDS</Platforms>
+
+		<PathMap>$(MSBuildProjectDirectory)=$(MSBuildProjectName)</PathMap>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+
+		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+		<Deterministic>true</Deterministic>
+	</PropertyGroup>
+
+
+
+	<!-- Game config -->
+	<PropertyGroup Condition="'$(Platform)' == 'RE9'">
+		<AssemblyName>RE9_DisablePostProcessingEffects</AssemblyName>
+		<DefineConstants>$(DefineConstants);RE9</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Platform)' == 'PRAGMATA'">
+		<AssemblyName>PRAGMATA_DisablePostProcessingEffects</AssemblyName>
+		<DefineConstants>$(DefineConstants);PRAGMATA</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Platform)' == 'MHWILDS'">
+		<AssemblyName>MHWilds_DisablePostProcessingEffects</AssemblyName>
+		<DefineConstants>$(DefineConstants);MHWILDS</DefineConstants>
+	</PropertyGroup>
+
+
+
+	<!-- Preprocessor constants -->
+	<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+		<DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+		<DefineConstants>$(DefineConstants);RELEASE</DefineConstants>
+	</PropertyGroup>
+
+
+
+	<!-- Dependencies -->
+	<ItemGroup>
+		<!-- csharp-api -->
+		<Reference Include=".\..\..\..\REFramework\Lib\csharp-api\**\*.dll">
+			<Private>false</Private>
+		</Reference>
+		<Reference Remove=".\..\..\..\REFramework\Lib\csharp-api\reframework\plugins\managed\dependencies\AssemblyGenerator.dll"></Reference>
+	</ItemGroup>
+
+
+
+	<!-- Reference assemblies -->
+	<ItemGroup Condition="'$(Platform)' == 'RE9'">
+		<Reference Include=".\..\..\..\RE9\Lib\reframework\**\*.dll">
+			<Private>false</Private>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Platform)' == 'PRAGMATA'">
+		<Reference Include=".\..\..\..\PRAGMATA\Lib\reframework\**\*.dll">
+			<Private>false</Private>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Platform)' == 'MHWILDS'">
+		<Reference Include=".\..\..\..\MHWilds\Lib\reframework\**\*.dll">
+			<Private>false</Private>
+		</Reference>
+	</ItemGroup>
+
+
+
+	<!-- Compile -->
+	<ItemGroup>
+		<!-- Remove all first -->
+		<Compile Remove=".\**\*.cs" />
+
+		<!-- Include shared -->
+		<Compile Include=".\*.cs" />
+		<Compile Include=".\Properties\**\*.cs" />
+		<Compile Include=".\Utility\**\*.cs" />
+
+		<!-- Include external -->
+		<Compile Include=".\..\..\..\REFramework\REFrameworkNETPluginConfig\REFrameworkNETPluginConfig\*.cs" />
+		<Compile Include=".\..\..\..\REFramework\REFrameworkNETPluginConfig\Utility\**\*.cs" />
+	</ItemGroup>
+
+
+
+	<!-- Compile game specific -->
+	<ItemGroup Condition="'$(Platform)' == 'RE9'">
+		<Compile Include=".\RE9\**\*.cs" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Platform)' == 'PRAGMATA'">
+		<Compile Include=".\PRAGMATA\**\*.cs" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Platform)' == 'MHWILDS'">
+		<Compile Include=".\MHWilds\**\*.cs" />
+	</ItemGroup>
+
+
+
+	<!-- Game plugin directories -->
+	<PropertyGroup Condition="'$(Platform)' == 'RE9'">
+		<GamePluginDirectory>D:\Games\steamapps\common\RESIDENT EVIL requiem BIOHAZARD requiem\reframework\plugins\managed\</GamePluginDirectory>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Platform)' == 'PRAGMATA'">
+		<GamePluginDirectory>D:\Games\steamapps\common\PRAGMATA\reframework\plugins\managed\</GamePluginDirectory>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Platform)' == 'MHWILDS'">
+		<GamePluginDirectory>D:\Games\steamapps\common\MonsterHunterWilds\reframework\plugins\managed\</GamePluginDirectory>
+	</PropertyGroup>
+
+
+
+	<!-- Post build -->
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(GamePluginDirectory)" />
+		<Copy Condition="'$(Configuration)' == 'Release'" SourceFiles="$(TargetPath)" DestinationFolder="$(MSBuildProjectDirectory)\..\Releases\$(AssemblyName)\csharp\reframework\plugins\managed\" />
+		<Copy Condition="'$(Configuration)' == 'Release'" SourceFiles="$(MSBuildProjectDirectory)\..\reframework\autorun\RE_DisablePostProcessingEffects.lua" DestinationFiles="$(MSBuildProjectDirectory)\..\Releases\$(AssemblyName)\lua\reframework\autorun\$(AssemblyName).lua" />
+	</Target>
+
+</Project>

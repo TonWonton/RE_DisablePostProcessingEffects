@@ -1,56 +1,47 @@
-#nullable enable
+using System.Diagnostics.CodeAnalysis;
 using REFrameworkNET;
 using REFrameworkNET.Attributes;
-using app;
 using via.render;
-using System;
+using app;
 
 
 namespace RE_DisablePostProcessingEffects
 {
 	public partial class DisablePostProcessingEffectsPlugin
 	{
-		/* PLUGIN INFO */
+		//Plugin
 		public const string PLUGIN_NAME = "RE9_DisablePostProcessingEffects";
 		public const string GUID = "RE9_DisablePostProcessingEffects";
-		public const string VERSION = "1.1.0";
+		public const string VERSION = "2.0.0";
 
 
 
-		/* VARIABLES */
+		//Var
 		private static RenderingManager? _renderingManager;
 
 
 
-		/* METHODS */
+		//Apply
 		private static partial void ApplyGameSpecificNonPersistentSettings()
 		{
-			RenderingManager? renderingManager = _renderingManager;
-			if (renderingManager != null)
+			if (Initialized)
 			{
 				ToggleType toggleType = _filmGrain.Value;
 				if (toggleType != ToggleType.Default)
 				{
-					renderingManager._IsFilmGrainCustomFilterEnable = toggleType == ToggleType.Enable;
+					_renderingManager._IsFilmGrainCustomFilterEnable = toggleType == ToggleType.Enable;
 				}
 			}
 		}
 
 		private static partial void ApplyGameSpecificPersistentSettings()
 		{
-
+			//NOP
 		}
 
 
 
-		/* HOOKS */
-		//[MethodHook(typeof(DLSSUpscalingInterface), "get_DLSSEnableSharpness", MethodHookType.Post)]
-		//public static void PostGetDLSSEnableSharpness(ref ulong retVal)
-		//{
-		//	Log.Info("get_DLSSEnableSharpness hook called");
-		//	retVal = 0;
-		//}
-
+		//Hooks
 		[MethodHook(typeof(EnvStageManager), nameof(EnvStageManager.OnChangeCurrentStage), MethodHookType.Post)]
 		public static void PostOnChangeCurrentStage(ref ulong retVal)
 		{
@@ -59,30 +50,67 @@ namespace RE_DisablePostProcessingEffects
 
 
 
-		/* INITIALIZATION */
-		private static partial bool TryInitializeGameSpecificVariables()
+		//Init
+		private static partial bool TryGetAndCacheToneMapping(ref ToneMapping? toneMapping)
 		{
-			if (_renderingManager == null) _renderingManager = API.GetManagedSingletonT<RenderingManager>();
-			if (_renderingManager == null) return false;
+			if (toneMapping != null) return true;
+			else
+			{
+				if (Utility.TryGetAndCacheManagedSingleton(ref _renderingManager))
+				{
+					ToneMapping? thisToneMapping = _renderingManager._ToneMapping;
+					if (thisToneMapping != null)
+					{
+						toneMapping = thisToneMapping;
+						return true;
+					}
+				}
+			}
 
-			_toneMapping = _renderingManager._ToneMapping;
-			if (_toneMapping == null) return false;
+			return false;
+		}
 
-			_ldrPostProcess = _renderingManager._LDRPostProcess;
-			if (_ldrPostProcess == null) return false;
+		private static partial bool TryGetAndCacheLDRPostProcess(ref LDRPostProcess? ldrPostProcess)
+		{
+			if (ldrPostProcess != null) return true;
+			else
+			{
+				if (Utility.TryGetAndCacheManagedSingleton(ref _renderingManager))
+				{
+					LDRPostProcess? thisLDRPostProcess = _renderingManager._LDRPostProcess;
+					if (thisLDRPostProcess != null)
+					{
+						ldrPostProcess = thisLDRPostProcess;
+						return true;
+					}
+				}
+			}
 
-			_ldrColorCorrect = _ldrPostProcess.ColorCorrect;
-			if (_ldrColorCorrect == null) return false;
+			return false;
+		}
 
-			_ldrLensDistortion = _ldrPostProcess.LensDistortion;
-			if (_ldrLensDistortion == null) return false;
-			
-			_ldrFilmGrain = _ldrPostProcess.FilmGrain;
-			if (_ldrFilmGrain == null) return false;
+		private static partial bool TryGetAndCacheVolumetricFogControl(ref VolumetricFogControl? volumetricFogControl)
+		{
+			if (volumetricFogControl != null) return true;
+			else
+			{
+				if (Utility.TryGetAndCacheManagedSingleton(ref _renderingManager))
+				{
+					VolumetricFogControl? thisVolumetricFogControl = _renderingManager._VolumetricFogControl;
+					if (thisVolumetricFogControl != null)
+					{
+						volumetricFogControl = thisVolumetricFogControl;
+						return true;
+					}
+				}
+			}
 
-			_volumetricFogControl = _renderingManager._VolumetricFogControl;
-			if (_volumetricFogControl == null) return false;
+			return false;
+		}
 
+		private static partial bool TryInitializeGameSpecific()
+		{
+			//Nothing to initialize
 			return true;
 		}
 	}

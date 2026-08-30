@@ -1,4 +1,4 @@
-#nullable enable
+using System.Diagnostics.CodeAnalysis;
 using REFrameworkNET;
 using REFrameworkNET.Attributes;
 using app;
@@ -10,27 +10,32 @@ namespace RE_DisablePostProcessingEffects
 {
 	public partial class DisablePostProcessingEffectsPlugin
 	{
-		/* PLUGIN INFO */
+		//Plugin
 		public const string PLUGIN_NAME = "PRAGMATA_DisablePostProcessingEffects";
 		public const string GUID = "PRAGMATA_DisablePostProcessingEffects";
-		public const string VERSION = "1.0.0";
+		public const string VERSION = "2.0.0";
 
 
 
-		/* METHODS */
+		//Var
+		private static CameraSystem? _cameraSystem;
+
+
+
+		//Apply
 		private static partial void ApplyGameSpecificNonPersistentSettings()
 		{
-
+			//NOP
 		}
 
 		private static partial void ApplyGameSpecificPersistentSettings()
 		{
-
+			//NOP
 		}
 
 
 
-		/* HOOKS */
+		//Hooks
 		[MethodHook(typeof(EnvironmentSceneManager), nameof(EnvironmentSceneManager.requestLoad), MethodHookType.Post)]
 		public static void PostRequestLoad(ref ulong retVal)
 		{
@@ -39,33 +44,67 @@ namespace RE_DisablePostProcessingEffects
 
 
 
-		/* INITIALIZATION */
-		private static partial bool TryInitializeGameSpecificVariables()
+		//Init
+		private static partial bool TryGetAndCacheToneMapping(ref ToneMapping? toneMapping)
 		{
-			CameraSystem cameraSystem = API.GetManagedSingletonT<CameraSystem>();
-			if (cameraSystem == null) return false;
+			if (toneMapping != null) return true;
+			else
+			{
+				if (Utility.TryGetCameraGameObject(ref _cameraSystem, out GameObject? cameraGameObject))
+				{
+					ToneMapping? thisToneMapping = cameraGameObject.TryGetComponent<ToneMapping>();
+					if (thisToneMapping != null)
+					{
+						toneMapping = thisToneMapping;
+						return true;
+					}
+				}
+			}
 
-			GameObject? cameraGameObject = cameraSystem.getCameraObject(CameraDefine.Role.Main);
-			if (cameraGameObject == null) return false;
+			return false;
+		}
 
-			_toneMapping = cameraGameObject.TryGetComponent<ToneMapping>(typeof(ToneMapping).FullName);
-			if (_toneMapping == null) return false;
+		private static partial bool TryGetAndCacheLDRPostProcess(ref LDRPostProcess? ldrPostProcess)
+		{
+			if (ldrPostProcess != null) return true;
+			else
+			{
+				if (Utility.TryGetCameraGameObject(ref _cameraSystem, out GameObject? cameraGameObject))
+				{
+					LDRPostProcess? thisLDRPostProcess = cameraGameObject.TryGetComponent<LDRPostProcess>();
+					if (thisLDRPostProcess != null)
+					{
+						ldrPostProcess = thisLDRPostProcess;
+						return true;
+					}
+				}
+			}
 
-			_ldrPostProcess = cameraGameObject.TryGetComponent<LDRPostProcess>(typeof(LDRPostProcess).FullName);
-			if (_ldrPostProcess == null) return false;
+			return false;
+		}
 
-			_ldrColorCorrect = _ldrPostProcess.ColorCorrect;
-			if (_ldrColorCorrect == null) return false;
+		private static partial bool TryGetAndCacheVolumetricFogControl(ref VolumetricFogControl? volumetricFogControl)
+		{
+			if (volumetricFogControl != null) return true;
+			else
+			{
+				if (Utility.TryGetCameraGameObject(ref _cameraSystem, out GameObject? cameraGameObject))
+				{
+					VolumetricFogControl? thisVolumetricFogControl = cameraGameObject.TryGetComponent<VolumetricFogControl>();
+					if (thisVolumetricFogControl != null)
+					{
+						volumetricFogControl = thisVolumetricFogControl;
+						return true;
+					}
+				}
+			}
 
-			_ldrLensDistortion = _ldrPostProcess.LensDistortion;
-			if (_ldrLensDistortion == null) return false;
+			return false;
+		}
 
-			_ldrFilmGrain = _ldrPostProcess.FilmGrain;
-			if (_ldrFilmGrain == null) return false;
-
-			_volumetricFogControl = cameraGameObject.TryGetComponent<VolumetricFogControl>(typeof(VolumetricFogControl).FullName);
-			if (_volumetricFogControl == null) return false;
-
+		private static partial bool TryInitializeGameSpecific()
+		{
+			//Nothing to initialize
 			return true;
 		}
 	}
