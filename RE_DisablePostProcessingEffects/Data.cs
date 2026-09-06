@@ -38,12 +38,31 @@ namespace RE_DisablePostProcessingEffects
 		Sharp
 	}
 
+	public enum LocalExposureType
+	{
+		Default = 1,
+		Legacy,
+		BlurredLuminance
+#if !MHWILDS
+		, LocalLaplacian
+#endif
+
+	}
+
 	public enum AutoExposure
 	{
 		Disable = 0,
 		Default = 1,
 		Enable,
 		FixedEnable
+	}
+
+	public enum ReferenceLuminance
+	{
+		Default = 1,
+		Maximum,
+		Average,
+		PercentileClippedAverage
 	}
 
 	public enum Vignette

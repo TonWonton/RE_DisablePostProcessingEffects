@@ -13,7 +13,7 @@ namespace RE_DisablePostProcessingEffects
 		//Plugin
 		public const string PLUGIN_NAME = "PRAGMATA_DisablePostProcessingEffects";
 		public const string GUID = "PRAGMATA_DisablePostProcessingEffects";
-		public const string VERSION = "2.0.0";
+		public const string VERSION = "2.1.0";
 
 
 

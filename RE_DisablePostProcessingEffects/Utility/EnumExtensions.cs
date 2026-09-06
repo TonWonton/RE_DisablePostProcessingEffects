@@ -52,6 +52,19 @@ namespace RE_DisablePostProcessingEffects
 			}
 		}
 
+		internal static ToneMapping.LocalExposureType ToToneMappingLocalExposureType(this LocalExposureType localExposureType)
+		{
+			switch (localExposureType)
+			{
+				case LocalExposureType.Legacy: return ToneMapping.LocalExposureType.Legacy;
+				case LocalExposureType.BlurredLuminance: return ToneMapping.LocalExposureType.BlurredLuminance;
+#if !MHWILDS
+				case LocalExposureType.LocalLaplacian: return ToneMapping.LocalExposureType.LocalLaplacian;
+#endif
+				default: return ToneMapping.LocalExposureType.BlurredLuminance;
+			}
+		}
+
 		internal static ToneMapping.AutoExposure ToToneMappingAutoExposure(this AutoExposure autoExposure)
 		{
 			switch (autoExposure)
@@ -60,6 +73,17 @@ namespace RE_DisablePostProcessingEffects
 				case AutoExposure.Enable: return ToneMapping.AutoExposure.Enable;
 				case AutoExposure.FixedEnable: return ToneMapping.AutoExposure.FixedEnable;
 				default: return ToneMapping.AutoExposure.Enable;
+			}
+		}
+
+		internal static ToneMapping.AutoExposureReferenceLuminance ToToneMappingReferenceLuminance(this ReferenceLuminance referenceLuminance)
+		{
+			switch (referenceLuminance)
+			{
+				case ReferenceLuminance.Maximum: return ToneMapping.AutoExposureReferenceLuminance.Maximum;
+				case ReferenceLuminance.Average: return ToneMapping.AutoExposureReferenceLuminance.Average;
+				case ReferenceLuminance.PercentileClippedAverage: return ToneMapping.AutoExposureReferenceLuminance.PercentileClippedAverage;
+				default: return ToneMapping.AutoExposureReferenceLuminance.Average;
 			}
 		}
 

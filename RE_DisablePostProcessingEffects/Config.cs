@@ -5,11 +5,6 @@ using REFrameworkNET.Attributes;
 using REFrameworkNET;
 using REFrameworkNETPluginConfig;
 using REFrameworkNETPluginConfig.Utility;
-using LocalExposureType = via.render.ToneMapping.LocalExposureType;
-using ReferenceLuminance = via.render.ToneMapping.AutoExposureReferenceLuminance;
-#if MHWILDS
-using ace;
-#endif
 
 namespace RE_DisablePostProcessingEffects
 {
@@ -65,7 +60,13 @@ namespace RE_DisablePostProcessingEffects
 
 		//Local exposure
 		private static ConfigEntry<ToggleType> _localExposure = _config.Add("Local exposure", ToggleType.Default);
-		private static ConfigEntry<LocalExposureType> _localExposureType = _config.Add("Local exposure type", LocalExposureType.BlurredLuminance);
+		private static ConfigEntry<LocalExposureType> _localExposureType = _config.Add("Local exposure type",
+#if MHWILDS
+			LocalExposureType.Legacy //Override MHWilds default Default -> Legacy
+#else
+			LocalExposureType.Default
+#endif
+		);
 
 		//Auto exposure
 		private static ConfigEntry<AutoExposure> _autoExposure = _config.Add("Auto exposure", AutoExposure.Default);
@@ -87,7 +88,7 @@ namespace RE_DisablePostProcessingEffects
 			5f
 #endif
 		);
-		private static ConfigEntry<ReferenceLuminance> _referenceLuminance = _config.Add("Reference luminance type", ReferenceLuminance.Average);
+		private static ConfigEntry<ReferenceLuminance> _referenceLuminance = _config.Add("Reference luminance type", ReferenceLuminance.Default);
 
 		//Contrast, gamma, and brightness
 		private static ConfigEntry<bool> _customContrast = _config.Add("Custom contrast", false);
@@ -112,20 +113,36 @@ namespace RE_DisablePostProcessingEffects
 		//Graphics settings
 		private static ConfigEntry<ToggleType> _volumetricFog = _config.Add("Volumetric fog", ToggleType.Default);
 		private static ConfigEntry<ToggleType> _filmGrain = _config.Add("Film grain", ToggleType.Default);
-		private static ConfigEntry<LensDistortionSetting> _lensDistortion = _config.Add("Lens distortion", LensDistortionSetting.DEFAULT);
+		private static ConfigEntry<LensDistortionSetting> _lensDistortion = _config.Add("Lens distortion",
+#if MHWILDS
+			LensDistortionSetting.OFF //Override MHWilds default DEFAULT -> OFF
+#else
+			LensDistortionSetting.DEFAULT
+#endif
+		);
+
+
+
+		//Load
+		private static void LoadConfig()
+		{
+			_config.LoadFromJson();
+		}
+
+		private static void LoadConfigAndApplyPersistentSettings()
+		{
+			LoadConfig();
+			ApplyPersistentSettings();
+		}
 
 
 
 		//Save
-		//Only save config if _shouldSaveConfig == true and API.IsDrawingUI() == false || ImGui.TreeNode(GUID_VERSION) == false
 		private static bool _shouldSaveConfig = false;
-		private static void RequestSaveConfig()
-		{
-			_shouldSaveConfig = true;
-		}
-
+		private static void RequestSaveConfig() { _shouldSaveConfig = true; }
 		private static void TrySaveConfig()
 		{
+			//Only save config if _shouldSaveConfig == true and API.IsDrawingUI() == false || ImGui.TreeNode(GUID_VERSION) == false
 			if (_shouldSaveConfig)
 			{
 				_shouldSaveConfig = false;
@@ -135,8 +152,94 @@ namespace RE_DisablePostProcessingEffects
 
 
 
+		//Reset
+		private static void ResetConfig(bool applyGameDefaultSettings)
+		{
+			//Reset every config entry
+			foreach (ConfigEntryBase configEntry in _config.Values)
+			{
+				configEntry.ResetSilent();
+			}
+
+			if (applyGameDefaultSettings)
+			{
+				//Revert mod default settings
+#if MHWILDS
+				_localExposureType.SetSilent(LocalExposureType.Default);
+				_lensDistortion.SetSilent(LensDistortionSetting.DEFAULT);
+#endif
+			}
+
+			//Request save and apply persistent settings
+			RequestSaveConfig();
+			ApplyPersistentSettings();
+		}
+
+
+
+		//Init
+		private static readonly System.Action _onConfigEntryValueChanged = RequestSaveConfig;
+		private static readonly System.Action _onConfigEntryValueChanged_PersistentSetting = ApplyPersistentSettings;
+		private static void RegisterConfigEvents()
+		{
+			System.Action onConfigEntryValueChanged = _onConfigEntryValueChanged;
+			System.Action onConfigEntryValueChanged_PersistentSetting = _onConfigEntryValueChanged_PersistentSetting;
+
+			foreach (ConfigEntryBase configEntry in _config.Values)
+			{
+				configEntry.ValueChanged += onConfigEntryValueChanged;
+			}
+
+			_customContrast.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
+			_contrast.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
+			_customGamma.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
+			_gamma.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
+			_customBrightness.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
+			_minBrightness.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
+			_maxBrightness.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
+			_customUIGamma.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
+			_uiGamma.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
+			_customUIBrightness.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
+			_minUIBrightness.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
+			_maxUIBrightness.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
+
+			_volumetricFog.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
+			_filmGrain.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
+			_lensDistortion.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
+		}
+
+		private static void UnregisterConfigEvents()
+		{
+			System.Action onConfigEntryValueChanged = _onConfigEntryValueChanged;
+			System.Action onConfigEntryValueChanged_PersistentSetting = _onConfigEntryValueChanged_PersistentSetting;
+
+			foreach (ConfigEntryBase configEntry in _config.Values)
+			{
+				configEntry.ValueChanged -= onConfigEntryValueChanged;
+			}
+
+			_customContrast.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
+			_contrast.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
+			_customGamma.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
+			_gamma.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
+			_customBrightness.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
+			_minBrightness.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
+			_maxBrightness.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
+			_customUIGamma.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
+			_uiGamma.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
+			_customUIBrightness.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
+			_minUIBrightness.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
+			_maxUIBrightness.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
+
+			_volumetricFog.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
+			_filmGrain.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
+			_lensDistortion.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
+		}
+
+
+
 		//Plugin Generated UI
-		private static readonly Vector4 _red = new Vector4(0.8f, 0f, 0f, 1f);
+		private static Vector4 Red { get { return new Vector4(0.8f, 0f, 0f, 1f); } }
 
 		[Callback(typeof(ImGuiDrawUI), CallbackType.Pre)]
 		public static void ImGuiDrawUI_Pre()
@@ -148,13 +251,16 @@ namespace RE_DisablePostProcessingEffects
 
 				ToggleType toggleType;
 				int labelNr = 0;
+
+				//Reset
+				ImGui.Text("Note: Resetting settings might require a game restart to revert the changes.");
+				if (ImGui.Button("Load saved settings")) LoadConfigAndApplyPersistentSettings(); ImGui.SameLine();
+				if (ImGui.Button("Reset settings to mod default")) ResetConfig(applyGameDefaultSettings: false); ImGui.SameLine();
+				if (ImGui.Button("Reset settings to game default")) ResetConfig(applyGameDefaultSettings: true);
 #if DEBUG
 				//Debug
 				ImGuiF.Category("Debug");
-				if (ImGui.Button("Debug print values"))
-				{
-					Debug.TryDebugPrintValues();
-				}
+				if (ImGui.Button("Debug print values")) Debug.TryDebugPrintValues();
 #endif
 				//Anti-aliasing
 				ImGuiF.Category("Anti-aliasing");
@@ -197,17 +303,19 @@ namespace RE_DisablePostProcessingEffects
 				_exposure.Combo().ResetButton(ref labelNr).GetValue(out toggleType);
 				_ev.BeginDisabled(toggleType.IsDefaultOrDisabled()).DragFloat(SLIDER_STEP_0p001, -100f, 100f).EndDisabled().ResetButton(ref labelNr);
 
+				//Local exposure
 				ImGuiF.Category("Local exposure");
 #if PRAGMATA || MHWILDS
 				ImGui.Text("Note: Changing local exposure to Default requires a game restart to revert the changes.");
 #endif
 				_localExposure.Combo().ResetButton(ref labelNr).GetValue(out toggleType);
-				_localExposureType.BeginDisabled(toggleType.IsDefaultOrDisabled()).Combo().EndDisabled().ResetButton(ref labelNr);
+				_localExposureType.Combo().ResetButton(ref labelNr);
 
+				//Auto exposure
 				ImGuiF.Category("Auto exposure");
 				_autoExposure.Combo().ResetButton(ref labelNr).GetValue(out AutoExposure autoExposure);
+				_referenceLuminance.Combo().ResetButton(ref labelNr);
 				bool isAutoExposureBeginDisabled = autoExposure == AutoExposure.Disable || autoExposure == AutoExposure.Default;
-				_referenceLuminance.BeginDisabled(isAutoExposureBeginDisabled).Combo().EndDisabled().ResetButton(ref labelNr);
 				_autoExposureMinEV.BeginDisabled(isAutoExposureBeginDisabled).DragFloat(SLIDER_STEP_0p01, -100f, 100f).EndDisabled().ResetButton(ref labelNr);
 				_autoExposureMaxEV.BeginDisabled(isAutoExposureBeginDisabled).DragFloat(SLIDER_STEP_0p01, -100f, 100f).EndDisabled().ResetButton(ref labelNr);
 
@@ -215,7 +323,7 @@ namespace RE_DisablePostProcessingEffects
 				ImGuiF.Category("Contrast, gamma, and brightness");
 				ImGui.Indent(ImGuiF.IndentSize); ImGui.Text("Note: Disabling custom contrast requires a game restart to revert the changes."); ImGui.Unindent(ImGuiF.IndentSize);
 				ImGui.Indent(ImGuiF.IndentSize); ImGui.Text("Note: Disabling custom gamma, brightness, UI gamma, or UI brightness requires changing the in-game brightness options or game restart to revert the changes."); ImGui.Unindent(ImGuiF.IndentSize);
-				ImGui.Indent(ImGuiF.IndentSize); ImGui.TextColored(_red, "Note: Custom gamma, brightness, UI gamma, and UI brightness are not compatible with HDR. Use the in-game options instead."); ImGui.Unindent(ImGuiF.IndentSize);
+				ImGui.Indent(ImGuiF.IndentSize); ImGui.TextColored(Red, "Note: Custom gamma, brightness, UI gamma, and UI brightness are not compatible with HDR. Use the in-game options instead."); ImGui.Unindent(ImGuiF.IndentSize);
 
 				ImGuiF.SubCategory("Contrast");
 				_customContrast.Checkbox().ResetButton(ref labelNr).GetValue(out bool customContrast);

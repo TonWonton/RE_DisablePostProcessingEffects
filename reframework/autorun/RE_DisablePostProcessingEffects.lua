@@ -25,9 +25,9 @@ end
 local _stringGUID = GetGUID()
 
 local function GetVersion()
-	if RE9 then return "2.0.0" end
-	if PRAGMATA then return "2.0.0" end
-	if MHWILDS then return "2.0.0" end
+	if RE9 then return "2.1.0" end
+	if PRAGMATA then return "2.1.0" end
+	if MHWILDS then return "2.1.0" end
 
 	return nil
 end
@@ -73,7 +73,8 @@ local function GetConfigTable()
 	elseif PRAGMATA then classTableConfig.fEV = 1.0
 	else classTableConfig.fEV = 0.0 end
 	classTableConfig.iLocalExposure = 1
-	classTableConfig.iLocalExposureType = 1
+	if MHWILDS then classTableConfig.iLocalExposureType = 0 --Override MHWilds default Default -> Legacy
+	else classTableConfig.iLocalExposureType = 1 end
 	classTableConfig.iAutoExposure = 1
 	if RE9 then classTableConfig.fAutoExposureMinEV = 1.0
 	elseif PRAGMATA then classTableConfig.fAutoExposureMinEV = 3.0
@@ -97,15 +98,16 @@ local function GetConfigTable()
 	classTableConfig.fMaxUIBrightness = 1.0
 	classTableConfig.iVolumetricFog = 1
 	classTableConfig.iFilmGrain = 1
-	classTableConfig.iLensDistortion = 1
+	if MHWILDS then classTableConfig.iLensDistortion = 0 --Override MHWilds default DEFAULT -> OFF
+	else classTableConfig.iLensDistortion = 1 end
 
 	return classTableConfig
 end
 local _classTableConfig = GetConfigTable()
 
 local function LoadFromJson()
-	local classTableConfigLoaded = json.load_file(_stringConfigFileName)
 	local classTableConfig = _classTableConfig
+	local classTableConfigLoaded = json.load_file(_stringConfigFileName)
 
 	if classTableConfigLoaded ~= nil then
 		for key, value in pairs(classTableConfigLoaded) do
@@ -113,6 +115,7 @@ local function LoadFromJson()
 		end
 	end
 end
+
 local function SaveToJson()
 	json.dump_file(_stringConfigFileName, _classTableConfig)
 end
@@ -132,6 +135,7 @@ local function GenerateEnumNames(enumArg)
 	return enumNames
 end
 
+--ToggleType
 local _enumToggleType =
 {
 	Disable = 0,
@@ -140,6 +144,7 @@ local _enumToggleType =
 }
 local _enumToggleTypeNames = GenerateEnumNames(_enumToggleType)
 
+--AntiAliasingType
 local _enumAntiAliasingType =
 {
 	NONE = 0,
@@ -160,6 +165,7 @@ local _toRenderConfigAntiAliasingType =
 	[_enumAntiAliasingType.SMAA] = 3
 }
 
+--TemporalAA
 local _enumTemporalAA =
 {
 	Disable = 0,
@@ -182,6 +188,7 @@ local _toToneMappingTemporalAA =
 	[_enumTemporalAA.Strong] = 4
 }
 
+--TemporalAAAlgorithm
 local _enumTemporalAAAlgorithm =
 {
 	Legacy = 0,
@@ -202,18 +209,32 @@ local _toToneMappingTemporalAAAlgorithm =
 	[_enumTemporalAAAlgorithm.Sharp] = 4
 }
 
+--LocalExposureType
 local function GetLocalExposureTypeEnum()
 	local enumLocalExposureType = {}
 
 	enumLocalExposureType.Legacy = 0
-	enumLocalExposureType.BlurredLuminance = 1
-	if MHWILDS == false then enumLocalExposureType.LocalLaplacian = 2 end
+	enumLocalExposureType.Default = 1
+	enumLocalExposureType.BlurredLuminance = 2
+	if not MHWILDS then enumLocalExposureType.LocalLaplacian = 3 end
 
 	return enumLocalExposureType
 end
 local _enumLocalExposureType = GetLocalExposureTypeEnum()
 local _enumLocalExposureTypeNames = GenerateEnumNames(_enumLocalExposureType)
+local function GetLocalExposureTypeEnumMap()
+	local toToneMappingLocalExposureType = {}
 
+	toToneMappingLocalExposureType[_enumLocalExposureType.Default] = 1 --BlurredLuminance
+	toToneMappingLocalExposureType[_enumLocalExposureType.Legacy] = 0
+	toToneMappingLocalExposureType[_enumLocalExposureType.BlurredLuminance] = 1
+	if not MHWILDS then toToneMappingLocalExposureType[_enumLocalExposureType.LocalLaplacian] = 2 end
+
+	return toToneMappingLocalExposureType
+end
+local _toToneMappingLocalExposureType = GetLocalExposureTypeEnumMap()
+
+--AutoExposure
 local _enumAutoExposure =
 {
 	Disable = 0,
@@ -230,14 +251,24 @@ local _toToneMappingAutoExposure =
 	[_enumAutoExposure.FixedEnable] = 1
 }
 
+--ReferenceLuminanceType
 local _enumReferenceLuminanceType =
 {
 	Maximum = 0,
-	Average = 1,
-	PercentileClippedAverage = 2
+	Default = 1,
+	Average = 2,
+	PercentileClippedAverage = 3
 }
 local _enumReferenceLuminanceTypeNames = GenerateEnumNames(_enumReferenceLuminanceType)
+local _toToneMappingReferenceLuminanceType =
+{
+	[_enumReferenceLuminanceType.Default] = 1, --Average
+	[_enumReferenceLuminanceType.Maximum] = 0,
+	[_enumReferenceLuminanceType.Average] = 1,
+	[_enumReferenceLuminanceType.PercentileClippedAverage] = 2
+}
 
+--Vignette
 local _enumVignette =
 {
 	Disable = 0,
@@ -264,6 +295,7 @@ local function GetVignetteEnumMap()
 end
 local _toToneMappingVignetting = GetVignetteEnumMap()
 
+--SharpnessType
 local _enumSharpnessType =
 {
 	Custom = 0,
@@ -291,6 +323,7 @@ local function GetSharpnessTypeEnumMap()
 end
 local _toRenderConfigSharpnessType = GetSharpnessTypeEnumMap()
 
+--LensDistortionSetting
 local _enumLensDistortionSetting =
 {
 	OFF = 0,
@@ -762,18 +795,28 @@ local function ApplyNonPersistentSettings()
 			_method__ToneMapping__set_EV:call(classToneMapping, classTableConfig.fEV)
 		end
 
+		--Auto exposure
 		local intAutoExposure = classTableConfig.iAutoExposure
 		if intAutoExposure ~= 1 then
 			_method__ToneMapping__setAutoExposure:call(classToneMapping, _toToneMappingAutoExposure[intAutoExposure])
 			_method__ToneMapping__set_AutoExposureMinEV:call(classToneMapping, classTableConfig.fAutoExposureMinEV)
 			_method__ToneMapping__set_AutoExposureMaxEV:call(classToneMapping, classTableConfig.fAutoExposureMaxEV)
-			_method__ToneMapping__set_ReferenceLuminance:call(classToneMapping, classTableConfig.iReferenceLuminanceType)
 		end
 
+		local intReferenceLuminanceType = classTableConfig.iReferenceLuminanceType
+		if intReferenceLuminanceType ~= 1 then
+			_method__ToneMapping__set_ReferenceLuminance:call(classToneMapping, _toToneMappingReferenceLuminanceType[intReferenceLuminanceType])
+		end
+
+		--Local exposure
 		intToggleType = classTableConfig.iLocalExposure
 		if intToggleType ~= 1 then
 			_method__ToneMapping__set_EnableLocalExposure:call(classToneMapping, intToggleType == 2)
-			_method__ToneMapping__setLocalExposureType:call(classToneMapping, classTableConfig.iLocalExposureType)
+		end
+
+		local intLocalExposureType = classTableConfig.iLocalExposureType
+		if intLocalExposureType ~= 1 then
+			_method__ToneMapping__setLocalExposureType:call(classToneMapping, _toToneMappingLocalExposureType[intLocalExposureType])
 		end
 
 		--Vignette
@@ -1071,7 +1114,30 @@ LogInfo("Loaded")
 
 
 
---10. Script generated UI
+--10 Config
+local function LoadConfigAndApplyPersistentSettings()
+	LoadFromJson()
+	ApplyPersistentSettings()
+end
+
+local function ResetConfig(boolApplyGameDefaultSettings)
+	_classTableConfig = GetConfigTable()
+
+	if boolApplyGameDefaultSettings then
+		--Revert mod default settings
+		if MHWILDS then
+			_classTableConfig.iLocalExposureType = 1
+			_classTableConfig.iLensDistortion = 1
+		end
+	end
+
+	ApplyPersistentSettings()
+end
+
+
+
+
+--11. Script generated UI
 local _floatIndent = 24.0
 
 local function Category(classStringText)
@@ -1117,6 +1183,13 @@ re.on_draw_ui(function()
 		local enumToggleTypeNames = _enumToggleTypeNames
 		local boolChanged = false
 		local boolAnyChanged = false --Any persistent setting
+
+		--Reset
+		imgui.text("Note: Resetting settings might require a game restart to revert the changes.")
+		if imgui.button("Load saved settings") then LoadConfigAndApplyPersistentSettings() end imgui.same_line()
+		if imgui.button("Reset settings to mod default") then ResetConfig(false) end imgui.same_line()
+		if imgui.button("Reset settings to game default") then ResetConfig(true) end
+
 
 		--AntiAliasing
 		Category("Anti-aliasing")
@@ -1169,19 +1242,15 @@ re.on_draw_ui(function()
 		Category("Local exposure")
 		if PRAGMATA or MHWILDS then imgui.text("Note: Changing local exposure to Default requires a game restart to revert the changes.") end
 		boolChanged, classTableConfig.iLocalExposure = Combo("Local exposure", classTableConfig.iLocalExposure, enumToggleTypeNames)
-
-		local intLocalExposure = classTableConfig.iLocalExposure
-		imgui.begin_disabled(intLocalExposure == 0 or intLocalExposure == 1)
 		boolChanged, classTableConfig.iLocalExposureType = Combo("Local exposure type", classTableConfig.iLocalExposureType, _enumLocalExposureTypeNames)
-		imgui.end_disabled()
 
 		--Auto exposure
 		Category("Auto exposure")
 		boolChanged, classTableConfig.iAutoExposure = Combo("Auto exposure", classTableConfig.iAutoExposure, _enumAutoExposureNames)
 
 		local intAutoExposure = classTableConfig.iAutoExposure
-		imgui.begin_disabled(intAutoExposure == 0 or intAutoExposure == 1)
 		boolChanged, classTableConfig.iReferenceLuminanceType = Combo("Reference luminance type", classTableConfig.iReferenceLuminanceType, _enumReferenceLuminanceTypeNames)
+		imgui.begin_disabled(intAutoExposure == 0 or intAutoExposure == 1)
 		boolChanged, classTableConfig.fAutoExposureMinEV = imgui.drag_float("Auto exposure min EV", classTableConfig.fAutoExposureMinEV, 0.01, -100.0, 100.0)
 		boolChanged, classTableConfig.fAutoExposureMaxEV = imgui.drag_float("Auto exposure max EV", classTableConfig.fAutoExposureMaxEV, 0.01, -100.0, 100.0)
 		imgui.end_disabled()

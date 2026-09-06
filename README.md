@@ -1,7 +1,7 @@
 # RE_DisablePostProcessingEffects
 
 ## Description
-Disable or change the settings of different post-processing effects for RE Engine games
+Disable or change the settings of different post-processing effects for RE Engine games.
 
 ## Features
 - Disable or change the settings of various post-processing effects

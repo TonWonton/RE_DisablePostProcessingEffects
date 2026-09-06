@@ -125,20 +125,32 @@ namespace RE_DisablePostProcessingEffects
 					toneMapping.EV = _ev.Value;
 				}
 
+				//Auto exposure
 				AutoExposure autoExposure = _autoExposure.Value;
 				if (autoExposure != AutoExposure.Default)
 				{
 					toneMapping.setAutoExposure(autoExposure.ToToneMappingAutoExposure());
 					toneMapping.AutoExposureMinEV = _autoExposureMinEV.Value;
 					toneMapping.AutoExposureMaxEV = _autoExposureMaxEV.Value;
-					toneMapping.ReferenceLuminance = _referenceLuminance.Value;
 				}
 
+				ReferenceLuminance referenceLuminance = _referenceLuminance.Value;
+				if (referenceLuminance != ReferenceLuminance.Default)
+				{
+					toneMapping.ReferenceLuminance = _referenceLuminance.Value.ToToneMappingReferenceLuminance();
+				}
+
+				//Local exposure
 				toggleType = _localExposure.Value;
 				if (toggleType != ToggleType.Default)
 				{
 					toneMapping.EnableLocalExposure = toggleType == ToggleType.Enable;
-					toneMapping.setLocalExposureType(_localExposureType.Value);
+				}
+
+				LocalExposureType localExposureType = _localExposureType.Value;
+				if (localExposureType != LocalExposureType.Default)
+				{
+					toneMapping.setLocalExposureType(localExposureType.ToToneMappingLocalExposureType());
 				}
 
 				//Vignette
@@ -242,20 +254,6 @@ namespace RE_DisablePostProcessingEffects
 
 
 		//Init
-		[PluginEntryPoint]
-		private static void Load()
-		{
-			RegisterConfigEvents();
-			_config.LoadFromJson();
-			Log.Info("Loaded " + VERSION);
-		}
-
-		[PluginExitPoint]
-		private static void Unload()
-		{
-			UnregisterConfigEvents();
-			Log.Info("Unloaded " + VERSION);
-		}
 		private static bool TryInitializeNative()
 		{
 			//Get shared native objects and cache method indexes
@@ -330,62 +328,19 @@ namespace RE_DisablePostProcessingEffects
 			Log.Info("Initialized");
 		}
 
-		private static readonly System.Action _onConfigEntryValueChanged = RequestSaveConfig;
-		private static readonly System.Action _onConfigEntryValueChanged_PersistentSetting = ApplyPersistentSettings;
-		private static void RegisterConfigEvents()
+		[PluginEntryPoint]
+		private static void Load()
 		{
-			System.Action onConfigEntryValueChanged = _onConfigEntryValueChanged;
-			System.Action onConfigEntryValueChanged_PersistentSetting = _onConfigEntryValueChanged_PersistentSetting;
-
-			foreach (ConfigEntryBase configEntry in _config.Values)
-			{
-				configEntry.ValueChanged += onConfigEntryValueChanged;
-			}
-
-			_customContrast.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
-			_contrast.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
-			_customGamma.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
-			_gamma.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
-			_customBrightness.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
-			_minBrightness.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
-			_maxBrightness.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
-			_customUIGamma.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
-			_uiGamma.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
-			_customUIBrightness.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
-			_minUIBrightness.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
-			_maxUIBrightness.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
-
-			_volumetricFog.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
-			_filmGrain.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
-			_lensDistortion.ValueChanged += onConfigEntryValueChanged_PersistentSetting;
+			LoadConfig();
+			RegisterConfigEvents();
+			Log.Info("Loaded " + VERSION);
 		}
 
-		private static void UnregisterConfigEvents()
+		[PluginExitPoint]
+		private static void Unload()
 		{
-			System.Action onConfigEntryValueChanged = _onConfigEntryValueChanged;
-			System.Action onConfigEntryValueChanged_PersistentSetting = _onConfigEntryValueChanged_PersistentSetting;
-
-			foreach (ConfigEntryBase configEntry in _config.Values)
-			{
-				configEntry.ValueChanged -= onConfigEntryValueChanged;
-			}
-
-			_customContrast.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
-			_contrast.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
-			_customGamma.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
-			_gamma.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
-			_customBrightness.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
-			_minBrightness.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
-			_maxBrightness.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
-			_customUIGamma.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
-			_uiGamma.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
-			_customUIBrightness.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
-			_minUIBrightness.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
-			_maxUIBrightness.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
-
-			_volumetricFog.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
-			_filmGrain.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
-			_lensDistortion.ValueChanged -= onConfigEntryValueChanged_PersistentSetting;
+			UnregisterConfigEvents();
+			Log.Info("Unloaded " + VERSION);
 		}
 	}
 
