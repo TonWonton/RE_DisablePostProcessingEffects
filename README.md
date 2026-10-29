@@ -48,7 +48,7 @@ Disable or change the settings of different post-processing effects for RE Engin
 3. Download the plugin and extract to game folder
     - .dll file should be in `\GAME_FOLDER\reframework\plugins\managed\`
 
-### Known issues
+## Known issues
 - [MHWilds] Flickering might occur when performing specific actions if frame gen is used and "Local exposure type" is set to "Legacy"
 
 ## Note
